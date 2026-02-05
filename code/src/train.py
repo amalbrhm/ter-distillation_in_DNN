@@ -54,4 +54,5 @@ def train():
     torch.save(model.state_dict(), "model.pth")
     print("Saved: model.pth")
     
-train()
+if __name__ == "__main__":
+    train()

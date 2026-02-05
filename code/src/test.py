@@ -2,7 +2,6 @@ import gc
 from data_prep import test_loader , device
 from hyperparameters import  model 
 import torch
-from train import train
 
 def test():
     
