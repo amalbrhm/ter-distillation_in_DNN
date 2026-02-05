@@ -1,0 +1,8 @@
+Task,Planned,Done,Status,Comments
+"Read Lange et al. (2023)",Yes,Yes,Completed,"Full paper read + structured notes"
+"Understand Gram matrices and Angular CKA",Yes,Partly,In progress,"Main concepts understood, implementation details to confirm"
+"Understand pipeline and figures from the paper",Yes,Partly,In progress,"Pipeline reconstructed, need to verify exact reproduction settings"
+"Inspect helper code (cka.py) and link to equations",Yes,No,Planned,"Scheduled for next week (map functions to paper steps)"
+"Start minimal implementation (Angular CKA on one model)",No,No,Planned,"Will start after code inspection"
+"Reproduce distance matrix + heatmap",No,No,Planned,"Depends on first implementation"
+"Reproduce path visualization (MDS + PCA)",No,No,Planned,"After heatmap sanity check"
