@@ -25,17 +25,8 @@ The main objectives of this TER are:
 - To implement and analyze similarity measures between representations (Gram matrices, CKA);
 - To reproduce key experiments from the reference paper;
 - To provide a clean and reproducible experimental framework.
-
+- ... to be defined further as the project progresses.
 ---
 
 ## Repository structure
 
-```text
-.
-├── src/                # Core source code (models, metrics, utilities)
-├── experiments/        # Scripts to reproduce experiments
-├── data/               # Data directory (empty or with download instructions)
-├── figures/            # Generated figures and visualizations
-├── report/             # LaTeX sources of the TER report
-├── README.md
-└── requirements.txt
