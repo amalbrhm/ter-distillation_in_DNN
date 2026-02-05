@@ -5,7 +5,7 @@ import torch
 from data_prep import train_loader, device
 
 num_classes  = 10
-num_epoches = 20
+num_epochs = 20
 batch_size = 16
 learning_rate = 0.01
 
