@@ -18,7 +18,7 @@ def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , sh
     
     # transforms to resize data convert it into tensors and normalize it
     transform = transforms.Compose([
-        transforms.Resize((224,224)),
+        #transforms.Resize((224,224)),
         transforms.ToTensor(),
         normalize,
         ])

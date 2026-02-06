@@ -3,14 +3,19 @@ from residual_bloc import ResidualBlock
 import torch.nn as nn
 import torch
 from data_prep import train_loader, device
-
+from resnet_cifar import resnet20_cifar
 num_classes  = 10
 num_epochs = 20
 batch_size = 16
 learning_rate = 0.01
 
-model = ResNet(
-    ResidualBlock , [3, 4 , 6 , 3 ]
+# resnet-10 [ 1, 1, 1, 1]
+# resnet-18 [ 2, 2, 2 ,2]
+# resnet-34 [ 3, 4, 6, 3] 6n + 2 = 32 => n = 5
+
+
+model = resnet20_cifar(
+    num_classes=10
     ).to(device)
 
 # loss and optimizer 
