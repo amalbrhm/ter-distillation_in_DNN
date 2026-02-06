@@ -1,0 +1,248 @@
+"""
+ResNet "CIFAR-style" en PyTorch (profondeur = 6n + 2, largeur configurable).
+
+Idée générale :
+- Entrées type CIFAR-10/100 : (N, 3, 32, 32)
+- Pas de maxpool au début (contrairement aux ResNet ImageNet)
+- 3 "stages" (groupes de blocs) :
+    width  -> 2*width -> 4*width
+- Pooling global : AdaptiveAvgPool2d(1) pour obtenir un vecteur fixe
+
+On peut construire :
+- ResNet-20 : n=3
+- ResNet-32 : n=5
+- ResNet-56 : n=9
+et faire varier width (16, 32, 64, 128, 160, ...) pour les "width sweeps".
+"""
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+# ============================================================
+# 1) Bloc résiduel "BasicBlock" (2 convolutions 3x3)
+# ============================================================
+class BasicBlock(nn.Module):
+    """
+    BasicBlock CIFAR-ResNet :
+    - 2 convolutions 3x3
+    - une connexion résiduelle (skip connection) : out = F(x) + shortcut(x)
+
+    expansion = 1 : la sortie a "planes" canaux (pas de multiplication).
+    """
+    expansion = 1
+
+    def __init__(self, in_planes: int, planes: int, stride: int = 1):
+        super().__init__()
+
+        # 1ère convolution : peut réduire la résolution si stride=2
+        self.conv1 = nn.Conv2d(
+            in_planes, planes,
+            kernel_size=3, stride=stride, padding=1,
+            bias=False
+        )
+        self.bn1 = nn.BatchNorm2d(planes)
+
+        # 2ème convolution : conserve toujours la résolution (stride=1)
+        self.conv2 = nn.Conv2d(
+            planes, planes,
+            kernel_size=3, stride=1, padding=1,
+            bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(planes)
+
+        # Par défaut, la shortcut est l'identité : shortcut(x) = x
+        self.shortcut = nn.Identity()
+
+        # Si la résolution change (stride != 1) OU si le nb de canaux change,
+        # on doit projeter x pour pouvoir faire l'addition out + x
+        if stride != 1 or in_planes != planes * self.expansion:
+            self.shortcut = nn.Sequential(
+                # Conv 1x1 : ajuste canaux et résolution via stride
+                nn.Conv2d(
+                    in_planes, planes * self.expansion,
+                    kernel_size=1, stride=stride,
+                    bias=False
+                ),
+                nn.BatchNorm2d(planes * self.expansion),
+            )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Chemin principal F(x)
+        out = F.relu(self.bn1(self.conv1(x)), inplace=True)
+        out = self.bn2(self.conv2(out))
+
+        # Ajout résiduel (skip connection)
+        out = out + self.shortcut(x)
+
+        # Activation finale
+        out = F.relu(out, inplace=True)
+        return out
+
+
+# ============================================================
+# 2) Bloc "Bottleneck" (1x1, 3x3, 1x1) - optionnel ici
+# ============================================================
+class Bottleneck(nn.Module):
+    """
+    Bottleneck (typique des ResNet-50/101/152) :
+    - Conv 1x1 : réduit/organise les canaux
+    - Conv 3x3 : traitement spatial
+    - Conv 1x1 : ré-augmente les canaux
+
+    expansion = 4 : la sortie a 4*planes canaux.
+    Pour CIFAR-ResNet-20/32/56, on utilise en général BasicBlock.
+    """
+    expansion = 4
+
+    def __init__(self, in_planes: int, planes: int, stride: int = 1):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+
+        self.conv2 = nn.Conv2d(
+            planes, planes,
+            kernel_size=3, stride=stride, padding=1,
+            bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(planes)
+
+        self.conv3 = nn.Conv2d(
+            planes, planes * self.expansion,
+            kernel_size=1, bias=False
+        )
+        self.bn3 = nn.BatchNorm2d(planes * self.expansion)
+
+        self.shortcut = nn.Identity()
+        if stride != 1 or in_planes != planes * self.expansion:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(
+                    in_planes, planes * self.expansion,
+                    kernel_size=1, stride=stride,
+                    bias=False
+                ),
+                nn.BatchNorm2d(planes * self.expansion),
+            )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out = F.relu(self.bn1(self.conv1(x)), inplace=True)
+        out = F.relu(self.bn2(self.conv2(out)), inplace=True)
+        out = self.bn3(self.conv3(out))
+
+        out = out + self.shortcut(x)
+        out = F.relu(out, inplace=True)
+        return out
+
+
+# ============================================================
+# 3) Réseau ResNetCIFAR : 3 stages (width, 2*width, 4*width)
+# ============================================================
+class ResNetCIFAR(nn.Module):
+    """
+    ResNet pour CIFAR (32x32) :
+    - profondeur = 6n + 2 lorsque block=BasicBlock
+      (3 stages, chaque stage a n blocs, chaque bloc a 2 conv => 6n conv + conv1 + fc)
+
+    Paramètres :
+    - n : nombre de blocs par stage (ex: n=3 => ResNet-20)
+    - width : largeur de base (ex: 16, 32, 64...)
+    - num_classes : nb de classes (CIFAR-10 => 10)
+    - block : type de bloc (BasicBlock par défaut)
+    """
+    def __init__(self, n: int, width: int = 16, num_classes: int = 10, block=BasicBlock):
+        super().__init__()
+        self.block = block
+
+        # in_planes suit le nombre de canaux "courant" à l'entrée du prochain stage
+        self.in_planes = width
+
+        # Stem CIFAR : Conv 3x3 stride 1, pas de maxpool
+        self.conv1 = nn.Conv2d(3, width, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(width)
+
+        # Stages :
+        # - layer1 : conserve 32x32, nb canaux = width
+        # - layer2 : downsample -> 16x16, nb canaux = 2*width
+        # - layer3 : downsample -> 8x8,  nb canaux = 4*width
+        self.layer1 = self._make_layer(planes=width, blocks=n, stride=1)
+        self.layer2 = self._make_layer(planes=2 * width, blocks=n, stride=2)
+        self.layer3 = self._make_layer(planes=4 * width, blocks=n, stride=2)
+
+        # Pooling global : (N, C, H, W) -> (N, C, 1, 1)
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+
+        # Couche de classification : vecteur de taille C -> num_classes
+        self.fc = nn.Linear(4 * width * self.block.expansion, num_classes)
+
+    def _make_layer(self, planes: int, blocks: int, stride: int) -> nn.Sequential:
+        """
+        Construit un stage composé de `blocks` blocs résiduels.
+        - Le 1er bloc peut downsample via `stride` (si stride=2)
+        - Les suivants gardent stride=1
+        """
+        layers = []
+
+        # 1er bloc du stage : peut changer résolution / nb de canaux
+        layers.append(self.block(self.in_planes, planes, stride))
+        self.in_planes = planes * self.block.expansion
+
+        # Blocs restants : même résolution, même nb de canaux
+        for _ in range(1, blocks):
+            layers.append(self.block(self.in_planes, planes, stride=1))
+            self.in_planes = planes * self.block.expansion
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Stem
+        out = F.relu(self.bn1(self.conv1(x)), inplace=True)
+
+        # 3 stages
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+
+        # Pooling global + flatten
+        out = self.avgpool(out)
+        out = torch.flatten(out, 1)
+
+        # Classification
+        out = self.fc(out)
+        return out
+
+
+# ============================================================
+# 4) Fonctions "builders" pour créer des modèles standards
+# ============================================================
+def resnet20(width: int = 16, num_classes: int = 10) -> ResNetCIFAR:
+    """ResNet-20 CIFAR : n=3 car 6*3 + 2 = 20"""
+    return ResNetCIFAR(n=3, width=width, num_classes=num_classes, block=BasicBlock)
+
+def resnet32(width: int = 16, num_classes: int = 10) -> ResNetCIFAR:
+    """ResNet-32 CIFAR : n=5 car 6*5 + 2 = 32"""
+    return ResNetCIFAR(n=5, width=width, num_classes=num_classes, block=BasicBlock)
+
+def resnet56(width: int = 16, num_classes: int = 10) -> ResNetCIFAR:
+    """ResNet-56 CIFAR : n=9 car 6*9 + 2 = 56"""
+    return ResNetCIFAR(n=9, width=width, num_classes=num_classes, block=BasicBlock)
+
+
+# ============================================================
+# 5) Sanity test : vérifier rapidement que le modèle fonctionne
+# ============================================================
+def _sanity_test():
+    """
+    Test minimal :
+    - crée un ResNet-20 width=16
+    - passe un batch factice (2 images 32x32)
+    - vérifie que la sortie est (batch_size, num_classes)
+    """
+    net = resnet20(width=16, num_classes=10)
+    x = torch.randn(2, 3, 32, 32)
+    y = net(x)
+    print("Output shape:", y.shape)  # attendu : (2, 10)
+
+if __name__ == "__main__":
+    _sanity_test()
