@@ -1,7 +1,8 @@
 import gc 
 from data_prep import train_loader , valid_loader , device
-from hyperparameters import num_epochs , model , optimizer , criterion
+from hyperparameters import num_epochs , model , optimizer , criterion , model_name
 import torch
+import os
 
 def train():
     # nombre de batches par epoch
@@ -50,9 +51,20 @@ def train():
                 del images , labels , outputs
                 
             print('Accuracy of the network on the {} validation images: {} %'.format(5000, 100 * correct / total))
-            
-    torch.save(model.state_dict(), "model.pth")
-    print("Saved: model.pth")
+    
+    save_dir = "models"
+    os.makedirs(save_dir, exist_ok=True)
+
+    save_path = os.path.join(save_dir, f"{model_name}.pth")
+    torch.save(model.state_dict(), save_path)
+
+    print(f"Saved: {save_path}")
+    
+    with open(os.path.join(save_dir, f"{model_name}.txt"), "w") as f:
+        f.write(f"Model: {model_name}\n")
+        f.write(f"Epochs: {num_epochs}\n")
+        f.write(str(model))
+
     
 if __name__ == "__main__":
     train()

@@ -1,5 +1,5 @@
 
-from residual_bloc import ResidualBlock
+
 import torch.nn as nn
 import torch
 from data_prep import train_loader, device
@@ -16,6 +16,7 @@ learning_rate = 0.01
 
 
 model = resnet20().to(device)
+model_name = "resnet20_w16"
 
 # loss and optimizer 
 
