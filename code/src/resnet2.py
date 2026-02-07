@@ -165,17 +165,11 @@ def resnet56(width: int = 16, num_classes: int = 10) -> ResNetCIFAR:
     return ResNetCIFAR(n=9, width=width, num_classes=num_classes, block=BasicBlock)
 
 
-def _sanity_test():
-    """
-    Test minimal :
-    - crée un ResNet-20 width=16
-    - passe un batch factice (2 images 32x32)
-    - vérifie que la sortie est (batch_size, num_classes)
-    """
+def _test():
     net = resnet20(width=16, num_classes=10)
     x = torch.randn(2, 3, 32, 32)
     y = net(x)
     print("Output shape:", y.shape)  # attendu : (2, 10)
 
 if __name__ == "__main__":
-    _sanity_test()
+    _test()
