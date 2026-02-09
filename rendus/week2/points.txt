@@ -1,0 +1,2 @@
+- parler de l'article de resnet 
+- parler de l'article du choix de m : CKA (Kornblith et al., 2019, Nguyen et al., 2021, etc.)

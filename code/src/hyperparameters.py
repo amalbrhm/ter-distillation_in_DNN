@@ -3,7 +3,7 @@
 import torch.nn as nn
 import torch
 from data_prep import train_loader, device
-from resnet2 import resnet20 
+from resnet2 import resnet20 , resnet32 
 num_classes  = 10
 num_epochs = 20
 batch_size = 16
@@ -14,8 +14,8 @@ learning_rate = 0.01
 # resnet-34 [ 3, 4, 6, 3] 6n + 2 = 32 => n = 5
 
 
-model = resnet20().to(device)
-model_name = "resnet20_w16"
+model = resnet32().to(device)
+model_name = model._get_name()
 
 # loss and optimizer 
 
