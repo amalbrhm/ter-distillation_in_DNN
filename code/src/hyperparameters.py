@@ -3,7 +3,6 @@
 import torch.nn as nn
 import torch
 from data_prep import train_loader, device
-from resnet_cifar import resnet20_cifar
 from resnet2 import resnet20 
 num_classes  = 10
 num_epochs = 20

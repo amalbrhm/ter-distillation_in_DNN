@@ -173,3 +173,9 @@ def _test():
 
 if __name__ == "__main__":
     _test()
+
+
+"""report : 
+We use CIFAR-style ResNets following the original design of He et al. (2015),
+with depth 6n+2 and three stages of increasing width. And including systematic depth/width.
+"""
