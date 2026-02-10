@@ -253,10 +253,12 @@ def main():
     # Charger le modèle
     if args.deepth == 20:
         model = resnet20(width=args.width, num_classes=10).to(device)
+        model_path = "models/resnet20_w16.pth"
     elif args.deepth == 32:
         model = resnet32(width=args.width, num_classes=10).to(device)
+        model_path = "models/resnet32_w16.pth"
 
-    state = torch.load(args.model_path, map_location=device)
+    state = torch.load(model_path, map_location=device)
     model.load_state_dict(state)
     model.eval()
 
@@ -291,10 +293,11 @@ def main():
             D[i, j] = angular_distance(embeddings[i], embeddings[j])
             
     if args.deepth == 20:
-        path = args.out_dir + "20"
+        path = "figures/" + args.out_dir + "20"
     else :
-        path = args.out_dir + "32"
-        
+        path = "figures/" + args.out_dir + "32"
+    
+    print("here")
     heatmap_path = os.path.join(path , "distances_heatmap.png")
     plot_distance_heatmap(D, emb_names, heatmap_path)
     print("Saved:", heatmap_path)
@@ -313,15 +316,16 @@ def main():
     i_in = emb_names.index("input")
     i_tg = emb_names.index("target")
 
-    # Si target est à gauche de input, on flip PC1
+    # Forcer target à droite de input
     if P[i_tg, 0] < P[i_in, 0]:
         P[:, 0] *= -1
-        V[:, 0] *= -1  # important: pour projeter aussi le plus court chemin
+        V[:, 0] *= -1
 
-    # Si target est en dessous de input, on flip PC2 (optionnel)
+    # Optionnel : target au-dessus de input
     if P[i_tg, 1] < P[i_in, 1]:
         P[:, 1] *= -1
         V[:, 1] *= -1
+
 
 
     # Géodésique sur la sphère dans l'espace MDS (dimension mds_dim)
