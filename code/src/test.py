@@ -1,11 +1,11 @@
 import gc 
 from data_prep import test_loader , device
-from hyperparameters import  model 
+from hyperparameters import  model ,model_name
 import torch
 
 def test():
     
-    model.load_state_dict(torch.load("models/resnet20_w16.pth", map_location=device))
+    model.load_state_dict(torch.load("models/ResNetCIFAR20_32.pth", map_location=device))
     model.to(device)
     model.eval()
     

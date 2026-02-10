@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 
 import cka  # cka.py
 from data_prep import valid_loader, test_loader, device
-from resnet2 import resnet20 , resnet32
+from resnet2 import resnet20 , resnet32 , resnet56
 
+import gc
 
 # -------------------------
 # MDS + PCA
@@ -52,9 +53,8 @@ def gram_from_features(F: torch.Tensor) -> torch.Tensor:
 
 def paper_embedding_from_gram(G: torch.Tensor) -> torch.Tensor:
     Gc = cka.double_center(G, vector_in=False, vector_out=False)          # cka.py
-    v = cka.to_vector_torch(Gc, kdiag=False, upper=False)                 # cka.py
-    v = v.reshape(-1)  # <-- force 1D
-
+    v = cka.to_vector_torch(Gc, kdiag=False, upper=False)       #cka.py
+    v = v.reshape(-1)
     v = v / (torch.norm(v) + 1e-12)
     return v
 
@@ -143,9 +143,11 @@ def embedding_input(X_imgs: torch.Tensor) -> torch.Tensor:
 
 
 def embedding_target(y: torch.Tensor, num_classes: int = 10) -> torch.Tensor:
+    print("in embedding target")
     # one-hot: (m,C)
     Y = torch.nn.functional.one_hot(y, num_classes=num_classes).float()
     G = gram_from_features(Y)
+    print("passed")
     return paper_embedding_from_gram(G)
 
 def slerp_path(a: np.ndarray, b: np.ndarray, n_points: int = 100) -> np.ndarray:
@@ -256,11 +258,17 @@ def main():
         model_path = "models/resnet20_w16.pth"
     elif args.deepth == 32:
         model = resnet32(width=args.width, num_classes=10).to(device)
-        model_path = "models/resnet32_w16.pth"
-
+        model_path = "models/resnet32_w16.pth"      
+    elif int(args.deepth) == 56:
+        model = resnet56(width=args.width, num_classes=10).to(device)
+        model_path = "models/resnet56_w16.pth"
+        
+    print("args.deepth " , int(args.deepth))
+    print(model_path )
     state = torch.load(model_path, map_location=device)
     model.load_state_dict(state)
     model.eval()
+    
 
     # Activations
     names, feats = collect_activations(model, X_imgs)
@@ -270,20 +278,23 @@ def main():
     
     embeddings.append(embedding_input(X_imgs))
     emb_names.append("input")
-
     # Embeddings pour chaque step
     for n in names:
         G = gram_from_features(feats[n])
         v = paper_embedding_from_gram(G)
         embeddings.append(v)
         emb_names.append(n)
+
+        # libère au fur et à mesure
+        del G
+        del feats[n]
+        gc.collect()
+
         
-    
     embeddings.append(embedding_target(y, num_classes=10))
     emb_names.append("target")
     print("embeddings names " ,emb_names)
     #print("embeddings" , embeddings)
-    
     # Distances
     L = len(embeddings)
     print(L)
@@ -292,12 +303,14 @@ def main():
         for j in range(L):
             D[i, j] = angular_distance(embeddings[i], embeddings[j])
             
-    if args.deepth == 20:
-        path = "figures/" + args.out_dir + "20"
-    else :
-        path = "figures/" + args.out_dir + "32"
-    
-    print("here")
+    if int(args.deepth) == 20:
+        path =  args.out_dir + "/figures20"
+        
+    elif int(args.deepth) == 56 :
+        path =  args.out_dir + "/figures56"
+    elif args.deepth == 32 :
+        path =  args.out_dir + "/figures32"
+    print("path " , path)
     heatmap_path = os.path.join(path , "distances_heatmap.png")
     plot_distance_heatmap(D, emb_names, heatmap_path)
     print("Saved:", heatmap_path)
@@ -312,7 +325,7 @@ def main():
     traj_path = os.path.join(path, "trajectory_pc1_pc2.png")
     
     shortest_path_2d = None
-        # Convention d'orientation : input à gauche, target à droite
+    # Convention d'orientation : input à gauche, target à droite
     i_in = emb_names.index("input")
     i_tg = emb_names.index("target")
 

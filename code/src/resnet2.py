@@ -22,7 +22,7 @@ import torch.nn.functional as F
 # 1) Bloc résiduel "BasicBlock" (2 convolutions 3x3)
 class BasicBlock(nn.Module):
     """
-    - 2 convolutions 3x3
+    - 2 convolutions 3x3 ( conv 1 + bn1 + conv 2 + bn2)
     - une connexion résiduelle (skip connection) : out = F(x) + shortcut(x)
 
     expansion = 1 pour la sortie a "planes" canaux.
@@ -64,9 +64,9 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(planes * self.expansion),
             )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor: # conv1 => bn1 => relu => conv2 => bn2 => adding shortcut => relu
         # Chemin principal F(x)
-        out = F.relu(self.bn1(self.conv1(x)), inplace=True)
+        out = F.relu(self.bn1(self.conv1(x)), inplace=True) 
         out = self.bn2(self.conv2(out))
 
         # Ajout résiduel (skip connection)
@@ -81,11 +81,11 @@ class BasicBlock(nn.Module):
 class ResNetCIFAR(nn.Module):
     """
     - profondeur = 6n + 2 
-      (3 stages, chaque stage a n blocs, chaque bloc a 2 conv => 6n conv + conv1 + fc)
+      (3 stages, chaque stage a n blocs, chaque bloc a 2 conv (regarder classe BasicBlock) => 6n conv + conv1 + fc)
 
     Paramètres :
     - n : nombre de blocs par stage (ex: n=3 => ResNet-20)
-    - width : largeur de base 
+    - width : largeur de base / nbr de filtres / canaux 
     - num_classes : nb de classes ( =10 ici)
     """
     def __init__(self, n: int, width: int = 16, num_classes: int = 10, block=BasicBlock):
@@ -101,8 +101,8 @@ class ResNetCIFAR(nn.Module):
 
         # Stages :
         # - layer1 : conserve 32x32, nb canaux = width
-        # - layer2 : downsample -> 16x16, nb canaux = 2*width
-        # - layer3 : downsample -> 8x8,  nb canaux = 4*width
+        # - layer2 : downsample with stride =2 -> 16x16, nb canaux = 2*width
+        # - layer3 : downsample with stride = 2 -> 8x8,  nb canaux = 4*width
         self.layer1 = self._make_layer(planes=width, blocks=n, stride=1)
         self.layer2 = self._make_layer(planes=2 * width, blocks=n, stride=2)
         self.layer3 = self._make_layer(planes=4 * width, blocks=n, stride=2)
