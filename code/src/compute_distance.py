@@ -2,7 +2,7 @@ import torch
 import cka
 from data_prep import test_loader, device , valid_loader
 
-from resnet2 import resnet20  
+from resnet import resnet20  
 
 MODEL_PATH = "models/resnet20_w16.pth"   
 N_MAX = 1024                            # nombre d'images pour former Gram (N x N) selon le papier CKA (Kornblith et al., 2019, Nguyen et al., 2021, etc.)

@@ -3,7 +3,7 @@
 import torch.nn as nn
 import torch
 from data_prep import train_loader, device
-from resnet2 import resnet20 , resnet32 , resnet56
+from resnet import resnet20 , resnet32 , resnet56
 num_classes  = 10
 num_epochs = 20
 batch_size = 16

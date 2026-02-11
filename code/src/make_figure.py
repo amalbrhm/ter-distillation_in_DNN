@@ -7,7 +7,7 @@ import re
 
 import cka  # cka.py
 from data_prep import valid_loader, test_loader, device
-from resnet2 import resnet20 , resnet32 , resnet56
+from resnet import resnet20 , resnet32 , resnet56
 
 import gc
 import torch
