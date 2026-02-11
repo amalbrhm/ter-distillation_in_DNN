@@ -8,6 +8,7 @@ import re
 import cka  # cka.py
 from data_prep import valid_loader, test_loader, device
 from resnet import resnet20 , resnet32 , resnet56
+from vgg import VGG_CIFAR
 
 import gc
 import torch
@@ -528,7 +529,9 @@ def main():
     # Charger le modèle
     model_path = get_model_path(args.depth, args.width, net=args.model)
 
-    if args.depth == 20:
+    if args.model == "vgg" :
+        model = VGG_CIFAR(d= args.depth)
+    elif args.depth == 20:
         model = resnet20(width=args.width, num_classes=10).to(device)
     elif args.depth == 32:
         model = resnet32(width=args.width, num_classes=10).to(device)

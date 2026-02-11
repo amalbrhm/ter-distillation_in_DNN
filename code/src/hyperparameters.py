@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch
 from data_prep import train_loader, device
 from resnet import resnet20 , resnet32 , resnet56
+from vgg import VGG_CIFAR
+
 num_classes  = 10
 num_epochs = 20
 batch_size = 16
@@ -14,8 +16,8 @@ learning_rate = 0.01
 # resnet-34 [ 3, 4, 6, 3] 6n + 2 = 32 => n = 5
 
 
-model = resnet20(width=32).to(device)
-model_name = model._get_name() + "20_32"
+model = VGG_CIFAR(d=11).to(device)
+model_name =  "vgg_d11"
 print(model_name)
 # loss and optimizer 
 

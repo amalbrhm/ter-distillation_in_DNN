@@ -5,7 +5,7 @@ import torch
 
 def test():
     
-    model.load_state_dict(torch.load("models/resnet32_w16.pth", map_location=device))
+    model.load_state_dict(torch.load("models/resnet_d32_w32.pth", map_location=device))
     model.to(device)
     model.eval()
     
