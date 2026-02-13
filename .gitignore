@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
-data
 to_do.txt
 questions.txt
 technic_word.txt
