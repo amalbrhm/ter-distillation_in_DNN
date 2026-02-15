@@ -7,7 +7,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 # --- globals expected by other scripts ---
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
-def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , shuffle = True , test= False , valid = False):
+def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , shuffle = True , test= False ):
     
 
     """function that returns the training or test data depending on the arguments """

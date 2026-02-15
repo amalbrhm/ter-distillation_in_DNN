@@ -38,7 +38,7 @@ def get_model_stats(model):
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return total_params, trainable_params
 
-def train(data_dir, save_dir = "models", epochs = 20):
+def train(data_dir, save_dir = "models", epochs = 20 ):
     
     train_loader , valid_loader = data_loader(data_dir , batch_size= 64 , test=False)
     show_images_augmented(train_loader)
@@ -48,6 +48,8 @@ def train(data_dir, save_dir = "models", epochs = 20):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     start_time = time.perf_counter()
+    final_train_loss = None
+    final_val_acc = None
     for epoch in range(epochs):
         for i , (images,labels) in enumerate(train_loader):
             # move tensors to the device
@@ -91,10 +93,14 @@ def train(data_dir, save_dir = "models", epochs = 20):
                 del images , labels , outputs
                 
             print('Accuracy of the network on the {} validation images: {} %'.format(5000, 100 * correct / total))
+            final_val_acc = 100 * correct / total
+            final_train_loss = float(loss.item())
             
     end_time = time.perf_counter()
     total_time = end_time - start_time
-
+    
+    
+    
     print(f"\nTotal training time: {total_time:.2f} seconds")
     print(f"Total training time: {total_time/60:.2f} minutes")
     
@@ -122,6 +128,8 @@ def train(data_dir, save_dir = "models", epochs = 20):
         f.write(f"GPU: {gpu_name}\n")
         f.write(f"Total training time (seconds): {total_time:.4f}\n")
         f.write(f"Total training time (minutes): {total_time/60:.4f}\n")
+        f.write(f"Final train loss: {final_train_loss:.6f}\n")  
+        f.write(f"Final validation accuracy (%): {final_val_acc:.4f}\n")
 
     print(f"\nTraining summary saved to {log_path}")
     

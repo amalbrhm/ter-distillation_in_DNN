@@ -1,17 +1,18 @@
 import gc 
-from data_prep import test_loader , device
+from data_prep import  device , data_loader
 from hyperparameters import  model ,model_name
 import torch
 
-def test():
+def test(data_dir, model_name):
     
-    model.load_state_dict(torch.load("models/resnet_d32_w32.pth", map_location=device))
+    model.load_state_dict(torch.load(model_name, map_location=device))
     model.to(device)
     model.eval()
     
     with torch.no_grad():
         correct = 0
         total = 0
+        test_loader = data_loader(data_dir=data_dir ,batch_size=64 ,  test=True)
         for images, labels in test_loader:
             images = images.to(device)
             labels = labels.to(device)
@@ -24,6 +25,16 @@ def test():
         print('Accuracy of the network on the {} test images: {} %'.format(10000, 100 * correct / total))
  
        
-
+import argparse
         
-test()
+if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", type=str, default="././data")
+    parser.add_argument("--model_name", type=str , default="resnet_d20_w16.pth")
+
+    args = parser.parse_args()
+    
+    model_name = "././models/" + args.model_name
+    
+    test(args.data_dir, model_name)
