@@ -1,13 +1,17 @@
 import gc 
-from data_prep import train_loader , valid_loader , device
+from data_prep import    data_loader
 from hyperparameters import num_epochs , model , optimizer , criterion , model_name
 import torch
 import os
+import argparse
 
-def train():
+def train(data_dir):
+    
+    train_loader , valid_loader = data_loader(data_dir , batch_size= 64 , test=False)
     # nombre de batches par epoch
     total_steps = len(train_loader)
-    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     for epoch in range(num_epochs):
         for i , (images,labels) in enumerate(train_loader):
             # move tensors to the device
@@ -67,4 +71,8 @@ def train():
 
     
 if __name__ == "__main__":
-    train()
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", type=str, default="././data")
+    args = parser.parse_args()
+    train(args.data_dir)
