@@ -7,7 +7,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 # --- globals expected by other scripts ---
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
-def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , shuffle = True , test= False):
+def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , shuffle = True , test= False , valid = False):
     
 
     """function that returns the training or test data depending on the arguments """
@@ -18,18 +18,24 @@ def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , sh
     )
     
     # transforms to resize data convert it into tensors and normalize it
-    transform = transforms.Compose([
-        #transforms.Resize((224,224)),
+    train_transform = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    normalize,
+    ])
+
+    test_transform = transforms.Compose([
         transforms.ToTensor(),
         normalize,
-        ])
+    ])
     
     if test : 
         dataset = datasets.CIFAR10(
             root=data_dir , 
             train=False , 
             download=True ,
-            transform=transform)
+            transform=test_transform)
         
         # to iterate into data through batches , and loaded while iteration and not all at once in start 
         data_loader = torch.utils.data.DataLoader(
@@ -44,14 +50,14 @@ def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , sh
         train_dataset = datasets.CIFAR10(
             root=data_dir ,
             train=True,
-            transform=transform,
+            transform=train_transform,
             download=True,
         )
         
         valid_dataset = datasets.CIFAR10(
             root=data_dir,
             train=True,
-            transform=transform,
+            transform=test_transform,
             download=True,
         )
         
@@ -85,6 +91,4 @@ def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , sh
         return ( train_loader , valid_loader )
 
 
-    
-    
     

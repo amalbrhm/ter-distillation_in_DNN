@@ -12,14 +12,37 @@ import time
 from datetime import datetime
 import os
 
+import matplotlib.pyplot as plt
+import torchvision
+
+def show_images_augmented(train_loader):
+
+    # prendre un batch du train loader
+    images, labels = next(iter(train_loader))
+
+    # dénormaliser pour affichage
+    mean = torch.tensor([0.4914, 0.4822, 0.4465]).view(3,1,1)
+    std = torch.tensor([0.2023, 0.1994, 0.2010]).view(3,1,1)
+    images = images * std + mean
+
+    grid = torchvision.utils.make_grid(images[:16], nrow=4)
+
+    plt.figure(figsize=(6,6))
+    plt.imshow(grid.permute(1,2,0))
+    plt.axis("off")
+    plt.title("Augmented training images")
+    plt.show()
+    
 def get_model_stats(model):
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return total_params, trainable_params
 
-def train(data_dir):
+def train(data_dir, save_dir = "models"):
     
     train_loader , valid_loader = data_loader(data_dir , batch_size= 64 , test=False)
+    show_images_augmented(train_loader)
+    
     # nombre de batches par epoch
     total_steps = len(train_loader)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -102,7 +125,6 @@ def train(data_dir):
 
     print(f"\nTraining summary saved to {log_path}")
     
-    save_dir = "models"
     os.makedirs(save_dir, exist_ok=True)
 
     save_path = os.path.join(save_dir, f"{model_name}.pth")
