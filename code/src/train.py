@@ -38,7 +38,7 @@ def get_model_stats(model):
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     return total_params, trainable_params
 
-def train(data_dir, save_dir = "models"):
+def train(data_dir, save_dir = "models", epochs = 20):
     
     train_loader , valid_loader = data_loader(data_dir , batch_size= 64 , test=False)
     show_images_augmented(train_loader)
@@ -48,7 +48,7 @@ def train(data_dir, save_dir = "models"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     start_time = time.perf_counter()
-    for epoch in range(num_epochs):
+    for epoch in range(epochs):
         for i , (images,labels) in enumerate(train_loader):
             # move tensors to the device
             
@@ -142,5 +142,6 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str, default="././data")
+    parser.add_argument("--epochs" , type=int , default=20)
     args = parser.parse_args()
-    train(args.data_dir)
+    train(args.data_dir , args.epochs)
