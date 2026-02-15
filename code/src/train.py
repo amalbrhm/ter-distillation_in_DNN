@@ -72,7 +72,7 @@ def train(data_dir, save_dir = "models", epochs = 20):
         torch.cuda.empty_cache()
         gc.collect()
             
-        print ('Epoch [{}/{}], Loss: {:.4f}' .format(epoch+1, num_epochs, loss.item()))
+        print ('Epoch [{}/{}], Loss: {:.4f}' .format(epoch+1, epochs, loss.item()))
         
         # validation 
         with torch.no_grad() : 
