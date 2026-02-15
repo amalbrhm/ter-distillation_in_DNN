@@ -1,6 +1,6 @@
 import gc 
 from data_prep import  data_loader
-from hyperparameters import num_epochs , model , optimizer , criterion , model_name
+from hyperparameters import num_epochs , model , optimizer , criterion , model_name , scheduler
 import torch
 import os
 import argparse
@@ -75,7 +75,8 @@ def train(data_dir, save_dir = "models", epochs = 20 ):
         gc.collect()
             
         print ('Epoch [{}/{}], Loss: {:.4f}' .format(epoch+1, epochs, loss.item()))
-        
+        scheduler.step()
+        print("LR now:", optimizer.param_groups[0]["lr"])
         # validation 
         with torch.no_grad() : 
             correct = 0 
