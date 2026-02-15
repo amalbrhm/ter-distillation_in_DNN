@@ -4,11 +4,11 @@ from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
+# --- globals expected by other scripts ---
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
 
 def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , shuffle = True , test= False):
     
-    # Device configuration
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     """function that returns the training or test data depending on the arguments """
     # normalisation so that the train is fast and easy to converge 
@@ -85,8 +85,6 @@ def data_loader(data_dir , batch_size , random_seed = 42 , valid_size = 0.1 , sh
         return ( train_loader , valid_loader )
 
 
-
-batch_size = 64
     
     
     

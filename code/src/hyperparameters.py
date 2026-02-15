@@ -9,8 +9,8 @@ from vgg import VGG_CIFAR
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 num_classes  = 10
-num_epochs = 20
-batch_size = 16
+num_epochs = 5
+batch_size = 16 # ou 64
 learning_rate = 0.01
 
 # resnet-10 [ 1, 1, 1, 1]

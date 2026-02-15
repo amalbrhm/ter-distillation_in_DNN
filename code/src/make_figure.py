@@ -180,7 +180,7 @@ def collect_activations(model, X_imgs: torch.Tensor, include_conv1= True):
                 out2 = out.mean(dim=(2, 3))  # GAP -> (B,C)
             else:
                 out2 = out
-            acts[name].append(out2.detach().to(torch.float32).contiguous())
+            acts[name].append(out2.detach().to(torch.float32).contiguous().cpu())
 
         return hook
 
