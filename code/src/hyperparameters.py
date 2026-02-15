@@ -19,8 +19,8 @@ learning_rate = 0.01
 # resnet-34 [ 3, 4, 6, 3] 6n + 2 = 32 => n = 5
 
 
-model = resnet20(width=32).to(device)
-model_name =  "resn_20_32"
+model = resnet32(width=32).to(device)
+model_name =  "resn_32_32"
 print(model_name)
 # loss and optimizer 
 
